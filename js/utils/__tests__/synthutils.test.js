@@ -1676,6 +1676,73 @@ describe("Utility Functions (logic-only)", () => {
             jest.useRealTimers();
         });
     });
+
+    describe("LiveWaveForm analyser disposal", () => {
+        it("disposes the previous analyser before creating a new one", () => {
+            const oldAnalyser = {
+                dispose: jest.fn()
+            };
+            const disconnectMock = jest.fn();
+            Synth.analyser = oldAnalyser;
+            Synth.mic = { connect: jest.fn(), disconnect: disconnectMock };
+
+            Synth.LiveWaveForm();
+
+            expect(disconnectMock).toHaveBeenCalledWith(oldAnalyser);
+            expect(oldAnalyser.dispose).toHaveBeenCalled();
+            expect(Synth.analyser).not.toBe(oldAnalyser);
+            expect(Synth.mic.connect).toHaveBeenCalledWith(Synth.analyser);
+        });
+
+        it("skips disposal when no previous analyser exists", () => {
+            Synth.analyser = null;
+            Synth.mic = { connect: jest.fn(), disconnect: jest.fn() };
+
+            Synth.LiveWaveForm();
+
+            expect(Synth.mic.disconnect).not.toHaveBeenCalled();
+            expect(Synth.analyser).toBeDefined();
+            expect(Synth.mic.connect).toHaveBeenCalledWith(Synth.analyser);
+        });
+    });
+
+    describe("disposeAllInstruments analyser cleanup", () => {
+        it("disposes the analyser and sets it to null", () => {
+            const disposeMock = jest.fn();
+            const disconnectMock = jest.fn();
+            const analyser = { dispose: disposeMock };
+            Synth.analyser = analyser;
+            Synth.mic = { disconnect: disconnectMock };
+
+            Synth.disposeAllInstruments();
+
+            expect(disconnectMock).toHaveBeenCalledWith(analyser);
+            expect(disposeMock).toHaveBeenCalled();
+            expect(Synth.analyser).toBeNull();
+        });
+
+        it("skips analyser cleanup when no analyser exists", () => {
+            Synth.analyser = null;
+            Synth.mic = { disconnect: jest.fn() };
+
+            Synth.disposeAllInstruments();
+
+            expect(Synth.mic.disconnect).not.toHaveBeenCalled();
+            expect(Synth.analyser).toBeNull();
+        });
+
+        it("handles disconnect errors gracefully during analyser disposal", () => {
+            Synth.analyser = { dispose: jest.fn() };
+            Synth.mic = {
+                disconnect: jest.fn(() => {
+                    throw new Error("already disconnected");
+                })
+            };
+
+            expect(() => Synth.disposeAllInstruments()).not.toThrow();
+            expect(Synth.analyser).toBeNull();
+        });
+    });
 });
 
 describe("Tuner Utilities (Audio Test Functions)", () => {

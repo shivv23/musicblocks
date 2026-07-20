@@ -179,6 +179,27 @@ class ToneAudioBuffer {
     }
 }
 
+class Analyser {
+    constructor(type, size) {
+        this.type = type;
+        this.size = size;
+        this.getValue = jest.fn(() => new Float32Array(128));
+        this.connect = jest.fn().mockReturnThis();
+        this.disconnect = jest.fn().mockReturnThis();
+        this.dispose = jest.fn().mockReturnThis();
+    }
+}
+
+class UserMedia {
+    constructor() {
+        this.connect = jest.fn().mockReturnThis();
+        this.disconnect = jest.fn().mockReturnThis();
+        this.open = jest.fn().mockResolvedValue();
+        this.close = jest.fn();
+        this.dispose = jest.fn().mockReturnThis();
+    }
+}
+
 const Tone = {
     AMSynth,
     PolySynth,
@@ -192,6 +213,8 @@ const Tone = {
     FMSynth,
     Transport,
     ToneAudioBuffer,
+    Analyser,
+    UserMedia,
     Frequency: jest.fn(() => {
         return {
             toFrequency: jest.fn().mockReturnThis()
