@@ -58,15 +58,44 @@ class PitchDrumMatrixCells {
             for (let j = 0; j < cellRow.cells.length; j++) {
                 cell = cellRow.cells[j];
 
+                if (typeof cell.setAttribute === "function") {
+                    cell.setAttribute("tabindex", "0");
+                    cell.setAttribute("role", "button");
+                    cell.setAttribute("aria-pressed", "false");
+                    cell.setAttribute("aria-label", "pitch drum mapping " + i + "," + j);
+                }
+
+                const toggleCell = targetCell => {
+                    const rowcol = targetCell.id.split(",");
+                    if (targetCell.style.backgroundColor === "black") {
+                        targetCell.style.backgroundColor = platformColor.selectorBackground;
+                        this._setCellPitchDrum(rowcol[1], rowcol[0], false);
+                        if (typeof targetCell.setAttribute === "function") {
+                            targetCell.setAttribute("aria-pressed", "false");
+                        }
+                    } else {
+                        targetCell.style.backgroundColor = "black";
+                        this._setCellPitchDrum(rowcol[1], rowcol[0], true);
+                        if (typeof targetCell.setAttribute === "function") {
+                            targetCell.setAttribute("aria-pressed", "true");
+                        }
+                    }
+                };
+
                 cell.onclick = e => {
                     const currCell = e.target;
-                    const rowcol = currCell.id.split(",");
-                    if (currCell.style.backgroundColor === "black") {
-                        currCell.style.backgroundColor = platformColor.selectorBackground;
-                        this._setCellPitchDrum(rowcol[1], rowcol[0], false);
-                    } else {
-                        currCell.style.backgroundColor = "black";
-                        this._setCellPitchDrum(rowcol[1], rowcol[0], true);
+                    toggleCell(currCell);
+                };
+
+                cell.onkeydown = e => {
+                    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                        if (typeof e.preventDefault === "function") {
+                            e.preventDefault();
+                        }
+                        if (typeof e.stopPropagation === "function") {
+                            e.stopPropagation();
+                        }
+                        toggleCell(e.target || cell);
                     }
                 };
             }
@@ -105,6 +134,9 @@ class PitchDrumMatrixCells {
 
                 if (cell !== undefined) {
                     cell.style.backgroundColor = "black";
+                    if (typeof cell.setAttribute === "function") {
+                        cell.setAttribute("aria-pressed", "true");
+                    }
                     this._setPairCell(row, col, cell, false);
                 }
             }
